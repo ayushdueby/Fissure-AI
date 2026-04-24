@@ -18,7 +18,7 @@ import java.util.Map;
 public class GitService {
 
     private RefManager refManager;
-    private Map<String,String>indexStaging;
+    private Map<String,String>indexStaging; //file_path->sha
     private ObjectStore objectStore;
     private GitService(RefManager refManager,ObjectStore objectStore)
     {

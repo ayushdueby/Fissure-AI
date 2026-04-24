@@ -13,7 +13,7 @@ import java.util.Map;
 @Data
 public class ObjectStore {
 
-    private Map<String,GitObject>ShaToGitObject;
+    private Map<String,GitObject>ShaToGitObject; // sha->gitObject
     public ObjectStore()
     {
         this.ShaToGitObject=new HashMap<>();
