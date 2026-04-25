@@ -35,6 +35,12 @@ public class GitService {
         refManager.createBranch("main", null);
         refManager.setHeadBranch("main");
     }
+
+    public String getHeadSha()
+    {
+        return refManager.getHeadSha();
+    }
+
     public void gitAdd(String path,String content) throws DigestException, NoSuchAlgorithmException {
         Blob blob =new Blob(content.getBytes(StandardCharsets.UTF_8));
         String sha=objectStore.store(blob);

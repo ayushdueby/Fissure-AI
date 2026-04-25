@@ -5,7 +5,6 @@ import com.GitClone.Git.model.DiffLine;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-@Component
 public class DiffEngine {
 
     public List<DiffLine> diff(String original, String modified) {
@@ -33,7 +32,7 @@ public class DiffEngine {
      * y+1 = insert
      * x+1,y+1 = match
      */
-    private List<Map<Integer, Integer>> buildEditGraph(String[] original, String[] modified) {
+    public List<Map<Integer, Integer>> buildEditGraph(String[] original, String[] modified) {
 
         int n = original.length;
         int m = modified.length;
@@ -93,9 +92,11 @@ public class DiffEngine {
     }
 
     /**
-     * Step 2: Backtrack to build diff result
+     * backtrack kyu?
+     * taki trace to add kr sake
+     * Backtrack to build diff result -> to get the stackTrace for delete,insert and unchanged ones
      */
-    private List<DiffLine> reconstructDiff(List<Map<Integer, Integer>> trace,
+    public List<DiffLine> reconstructDiff(List<Map<Integer, Integer>> trace,
                                            String[] original,
                                            String[] modified) {
 

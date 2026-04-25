@@ -19,6 +19,10 @@ public class Tree extends GitObject {
     public void addEntry(String name, String sha) {
         entries.put(name, sha);
     }
+    public String getBlobSha(String fileName)
+    {
+        return entries.get(fileName);
+    }
 
     @Override
     public byte[] serialize() {
