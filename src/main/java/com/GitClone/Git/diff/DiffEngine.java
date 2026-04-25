@@ -1,8 +1,7 @@
 package com.GitClone.Git.diff;
 
-import com.GitClone.Git.diffEnum.DiffType;
+import com.GitClone.Git.gitEnum.DiffType;
 import com.GitClone.Git.model.DiffLine;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 public class DiffEngine {

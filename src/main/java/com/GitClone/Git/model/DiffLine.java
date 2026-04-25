@@ -1,6 +1,6 @@
 package com.GitClone.Git.model;
 
-import com.GitClone.Git.diffEnum.DiffType;
+import com.GitClone.Git.gitEnum.DiffType;
 import lombok.Data;
 
 @Data

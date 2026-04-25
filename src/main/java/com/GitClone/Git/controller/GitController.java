@@ -1,6 +1,5 @@
 package com.GitClone.Git.controller;
 
-import com.GitClone.Git.diffEnum.DiffType;
 import com.GitClone.Git.model.DiffLine;
 import com.GitClone.Git.service.DiffService;
 import com.GitClone.Git.service.GitService;
