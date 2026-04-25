@@ -1,5 +1,8 @@
 package com.GitClone.Git.controller;
 
+import com.GitClone.Git.diffEnum.DiffType;
+import com.GitClone.Git.model.DiffLine;
+import com.GitClone.Git.service.DiffService;
 import com.GitClone.Git.service.GitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,7 @@ import java.util.List;
 public class GitController {
 
     @Autowired public GitService gitService;
+    @Autowired public DiffService diffService;
 
     @PostMapping("/init")
     public void gitInit()
@@ -43,5 +47,14 @@ public class GitController {
     {
         return gitService.gitListBranch();
     }
-
+    @GetMapping("/diff")
+    public List<DiffLine> getDiff(@RequestParam String sha1,@RequestParam String sha2,@RequestParam String fileName)
+    {
+        return diffService.diffCommits(sha1,sha2,fileName);
+    }
+    @GetMapping("/diff/working")
+    public List<DiffLine> getDiff(@RequestParam String file,@RequestParam String newContent)
+    {
+        return diffService.diffWorkingVsHead(file,newContent);
+    }
 }

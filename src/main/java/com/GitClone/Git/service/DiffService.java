@@ -51,10 +51,10 @@ public class DiffService {
 
         Tree tree=(Tree) objectStore.getGitObject(commit.getTreeSha());
 
-        String blobSha2 = tree.getBlobSha(filePath);
+        String blobSha = tree.getBlobSha(filePath);
 
-        String blobContent = blobSha2 == null ? "" :
-                new String(((Blob) objectStore.getGitObject(blobSha2)).serialize(), StandardCharsets.UTF_8);
+        String blobContent = blobSha == null ? "" :
+                new String(((Blob) objectStore.getGitObject(blobSha)).serialize(), StandardCharsets.UTF_8);
 
         return diffEngine.diff(blobContent,newContent);
     }
