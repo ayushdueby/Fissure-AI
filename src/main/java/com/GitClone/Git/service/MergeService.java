@@ -23,19 +23,22 @@ public class MergeService {
     @Autowired private ObjectStore objectStore;
     @Autowired private GetBlobContent getBlobContent;
     @Autowired private SerializingChunks serializeCombinedChunks;
+    public StringBuilder mergeConflictStore;
 
-    public void merge(String targetBranch) throws DigestException, NoSuchAlgorithmException {
+    public boolean canMerge(String targetBranch, boolean shouldMerge) throws DigestException, NoSuchAlgorithmException {
         String oursSha=gitService.getHeadSha();
         String theirSha=refManager.getBranchSha(targetBranch);
         String baseSha=commitDAG.findLCA(oursSha,theirSha);
-
+        this.mergeConflictStore=new StringBuilder();
         /*
                 if no base present there
                 koi ancestor nai hai
                 then it's a conflicts
         */
         if(baseSha==null)
-            throw new RuntimeException("No common ancestor");
+        {
+            return false;
+        }
 
         //for our->
         Commit commitOur=(Commit) objectStore.getGitObject(oursSha);
@@ -73,6 +76,8 @@ public class MergeService {
                 System.out.println(mergeEngine.serializeConflictMarkers(
                         mergeEngine.getConflictMarkers(mergeResult)
                 ));
+                List<MergeChunk> conflicts = mergeEngine.getConflictMarkers(mergeResult);
+                this.mergeConflictStore.append(mergeEngine.serializeConflictMarkers(conflicts));
             }
             else
             {
@@ -85,7 +90,8 @@ public class MergeService {
         }
         if(hasConflict)
         {
-            throw new RuntimeException("Merge conflict are there: ");
+            return false;
+            //throw new RuntimeException("Merge conflict are there: ");
             //commit nai krna hai because of conflicts
         }
         else
@@ -108,22 +114,31 @@ public class MergeService {
             if (commitDAG.isAncestor(oursSha, theirSha)) {
                 // fast-forward
                 refManager.updateCurrentBranchAfterCommit(theirSha);
-                return;
+                return true;
             }
-
-            Tree mergedTree=new Tree();
-            mergedTree.setEntries(new HashMap<>(mergedFileToBlobSha));
-
-            String mergedTreeSha=objectStore.store(mergedTree);
-
-            List<String>mergedParents=List.of(oursSha,theirSha);
-
-            Commit mergedCommit=new Commit(mergedTreeSha,mergedParents,"Merged Commit","AyushDubey");
-            String commitSha=objectStore.store(mergedCommit);
-
-            commitDAG.addCommit(commitSha,mergedParents);
-            refManager.updateCurrentBranchAfterCommit(commitSha);
+            if (commitDAG.isAncestor(theirSha, oursSha)) {
+                return true; // already up-to-date
+            }
+            if(shouldMerge)
+            {
+                mergeCommits(oursSha,theirSha,mergedFileToBlobSha);
+            }
         }
+        return true;
+    }
+    public void mergeCommits(String oursSha,String theirSha,Map<String,String>mergedFileToBlobSha) throws DigestException, NoSuchAlgorithmException {
+        Tree mergedTree=new Tree();
+        mergedTree.setEntries(new HashMap<>(mergedFileToBlobSha));
+
+        String mergedTreeSha=objectStore.store(mergedTree);
+
+        List<String>mergedParents=List.of(oursSha,theirSha);
+
+        Commit mergedCommit=new Commit(mergedTreeSha,mergedParents,"Merged Commit","AyushDubey");
+        String commitSha=objectStore.store(mergedCommit);
+
+        commitDAG.addCommit(commitSha,mergedParents);
+        refManager.updateCurrentBranchAfterCommit(commitSha);
     }
 
 }

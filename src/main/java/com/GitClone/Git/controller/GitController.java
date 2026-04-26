@@ -3,6 +3,7 @@ package com.GitClone.Git.controller;
 import com.GitClone.Git.model.DiffLine;
 import com.GitClone.Git.service.DiffService;
 import com.GitClone.Git.service.GitService;
+import com.GitClone.Git.service.MergeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,7 @@ public class GitController {
 
     @Autowired public GitService gitService;
     @Autowired public DiffService diffService;
+    @Autowired public MergeService mergeService;
 
     @PostMapping("/init")
     public void gitInit()
@@ -36,6 +38,12 @@ public class GitController {
     {
         gitService.gitCheckout(target);
     }
+    @PostMapping("/merge")
+    public void gitMerge(@RequestParam String branch) throws DigestException, NoSuchAlgorithmException {
+        mergeService.canMerge(branch,true);
+    }
+
+
     @GetMapping("/log")
     public List<String> gitLog()
     {
@@ -55,5 +63,13 @@ public class GitController {
     public List<DiffLine> getDiff(@RequestParam String file,@RequestParam String newContent)
     {
         return diffService.diffWorkingVsHead(file,newContent);
+    }
+    @GetMapping("/merge/preview")
+    public String gitCheckMergeConflicts(@RequestParam String branch) throws DigestException, NoSuchAlgorithmException {
+        boolean canMerge = mergeService.canMerge(branch, false);
+        if(!canMerge)
+            return mergeService.mergeConflictStore.toString();
+        else
+            return "No conflicts";
     }
 }
