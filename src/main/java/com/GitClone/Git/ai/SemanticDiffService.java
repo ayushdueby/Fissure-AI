@@ -7,6 +7,7 @@ import com.GitClone.Git.model.DiffLine;
 import com.GitClone.Git.model.SemanticGroup;
 import com.GitClone.Git.service.DiffService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -77,8 +78,9 @@ public class SemanticDiffService {
     }
     public String generation(String prompt) {
         try {
+            Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+            String apiKey=System.getProperty("GEMINI_API_KEY",dotenv.get("GEMINI_API_KEY"));
 
-            String apiKey=System.getProperty("GEMINI_API_KEY");
             if (apiKey == null) {
                 throw new RuntimeException("GEMINI_API_KEY_NOT_SET");
             }

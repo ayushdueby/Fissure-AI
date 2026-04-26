@@ -132,7 +132,7 @@ public class DiffEngine {
             int previousY = previousX - previousDiagonal;
 
             // Traverse diagonal (UNCHANGED)
-            while (x > previousX && y > previousY) {
+            while (x > previousX && y > previousY && x > 0 && y > 0) {
                 result.add(new DiffLine(original[x - 1], DiffType.UNCHANGED));
                 x--;
                 y--;
@@ -140,11 +140,15 @@ public class DiffEngine {
 
             // Handle ADD / DELETE
             if (x == previousX) {
-                result.add(new DiffLine(modified[y - 1], DiffType.ADDED));
-                y--;
+                if (y > 0) {   // FIX
+                    result.add(new DiffLine(modified[y - 1], DiffType.ADDED));
+                    y--;
+                }
             } else {
-                result.add(new DiffLine(original[x - 1], DiffType.DELETED));
-                x--;
+                if (x > 0) {   // FIX
+                    result.add(new DiffLine(original[x - 1], DiffType.DELETED));
+                    x--;
+                }
             }
         }
 
