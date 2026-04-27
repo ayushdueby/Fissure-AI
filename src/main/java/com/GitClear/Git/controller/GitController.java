@@ -1,6 +1,9 @@
 package com.GitClear.Git.controller;
 
+import com.GitClear.Git.ai.IntentPredictorService;
 import com.GitClear.Git.ai.SemanticDiffService;
+import com.GitClear.Git.dag.CommitDAG;
+import com.GitClear.Git.dto.CommitIntentResult;
 import com.GitClear.Git.dto.CommitRequest;
 import com.GitClear.Git.dto.SemanticDiffResult;
 import com.GitClear.Git.model.DiffLine;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.DigestException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -23,6 +27,8 @@ public class GitController {
     @Autowired public DiffService diffService;
     @Autowired public MergeService mergeService;
     @Autowired public SemanticDiffService semanticDiffService;
+    @Autowired public IntentPredictorService intentPredictorService;
+    @Autowired public CommitDAG commitDAG;
 
     @PostMapping("/init")
     public void gitInit()
@@ -104,4 +110,25 @@ public class GitController {
                 semanticDiffService.semanticDiff(sha1, sha2, file)
         );
     }
+    @GetMapping("/ai/intent")
+    public ResponseEntity<CommitIntentResult> getAiCommitIntent(
+            @RequestParam String sha1
+    ) {
+        return ResponseEntity.ok(
+                intentPredictorService.predictIntent(sha1)
+        );
+    }
+    @GetMapping("/ai/intent/batch")
+    public ResponseEntity<CommitIntentResult> getAiCommitIntentBatch(
+            @RequestParam String branch,
+            @RequestParam Integer limit
+    ) {
+        List<String>getLastTencommit=commitDAG.getHistory(gitService.getBranchsha(branch)).stream()
+                .limit(limit)
+                .toList();
+        return ResponseEntity.ok(
+                intentPredictorService.predictIntentBatch(getLastTencommit)
+        );
+    }
+
 }

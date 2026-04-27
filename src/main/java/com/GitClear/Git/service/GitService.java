@@ -162,4 +162,8 @@ public class GitService {
         return commitSha;
 
     }
+    public String getBranchsha(String sha)
+    {
+        return refManager.getBranchSha(sha);
+    }
 }
