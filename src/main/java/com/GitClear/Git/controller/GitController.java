@@ -1,12 +1,15 @@
 package com.GitClear.Git.controller;
 
+import com.GitClear.Git.ai.ConflictProphetService;
 import com.GitClear.Git.ai.IntentPredictorService;
 import com.GitClear.Git.ai.SemanticDiffService;
 import com.GitClear.Git.dag.CommitDAG;
 import com.GitClear.Git.dto.CommitIntentResult;
 import com.GitClear.Git.dto.CommitRequest;
 import com.GitClear.Git.dto.SemanticDiffResult;
+import com.GitClear.Git.dto.TrajectoryResponse;
 import com.GitClear.Git.model.DiffLine;
+import com.GitClear.Git.model.ProphecyReport;
 import com.GitClear.Git.service.DiffService;
 import com.GitClear.Git.service.GitService;
 import com.GitClear.Git.service.MergeService;
@@ -29,6 +32,7 @@ public class GitController {
     @Autowired public SemanticDiffService semanticDiffService;
     @Autowired public IntentPredictorService intentPredictorService;
     @Autowired public CommitDAG commitDAG;
+    @Autowired public ConflictProphetService conflictProphetService;
 
     @PostMapping("/init")
     public void gitInit()
@@ -130,5 +134,31 @@ public class GitController {
                 intentPredictorService.predictIntentBatch(getLastTencommit)
         );
     }
+    @GetMapping("/ai/prophet")
+    public ResponseEntity<ProphecyReport> getAiProphet(
+            @RequestParam String branch1,
+            @RequestParam String branch2
+    ) {
+        return ResponseEntity.ok(
+                conflictProphetService.prophesy(branch1,branch2)
+        );
+    }
+    @GetMapping("/ai/prophet/trajectory")
+    public ResponseEntity<TrajectoryResponse> getAiProphetTrajectory(
+            @RequestParam String branch1,
+            @RequestParam String branch2
+    ) {
+        return ResponseEntity.ok(
+                conflictProphetService.getCollisionTrajectory(branch1,branch2)
+        );
+    }
+    @GetMapping("/ai/prophet/quick")
+    public double getAiProphetTrajectory2(
+            @RequestParam String branch1,
+            @RequestParam String branch2
+    ) {
+        return conflictProphetService.prophesy(branch1,branch2).getOverallConflictProbability();
+    }
+
 
 }

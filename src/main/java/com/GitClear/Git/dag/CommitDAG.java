@@ -97,6 +97,37 @@ public class CommitDAG {
         return null;
 
     }
+    public int findLCASize(String sha1, String sha2) {
+
+        if(sha1==null || sha2==null)return Integer.MAX_VALUE;
+
+        Set<String>historySha1=new HashSet<>(getHistory(sha1));
+        Set<String> vis = new HashSet<>();
+
+        Queue<String>queue=new LinkedList<>();
+        queue.add(sha2);
+        int count=0;
+
+        while(!queue.isEmpty())
+        {
+            String front=queue.poll();
+
+            if(front==null || vis.contains(front))continue;
+            if(historySha1.contains(front))
+            {
+                return count;
+            }
+            count++;
+            vis.add(front);
+
+            for(String parent:getParents(front))
+            {
+                queue.add(parent);
+            }
+        }
+        return Integer.MAX_VALUE;
+
+    }
     public boolean isAncestor(String potentialAncestor, String ofSha)
     {
         return getHistory(ofSha).contains(potentialAncestor);

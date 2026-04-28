@@ -3,16 +3,15 @@ package com.GitClear.Git.ai;
 import com.GitClear.Git.dag.CommitDAG;
 import com.GitClear.Git.diff.DiffEngine;
 import com.GitClear.Git.model.Commit;
+import com.GitClear.Git.model.DivergenceReport;
+import com.GitClear.Git.model.FileCollisionRisk;
 import com.GitClear.Git.model.Tree;
 import com.GitClear.Git.refs.RefManager;
 import com.GitClear.Git.store.ObjectStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class BranchDivergenceAnalyzer {
@@ -20,7 +19,7 @@ public class BranchDivergenceAnalyzer {
     @Autowired private CommitDAG commitDAG;
     @Autowired private DiffEngine diffEngine;
     @Autowired private ObjectStore objectStore;
-    public void analyzeDivergence(String branch1, String branch2){
+    public DivergenceReport analyzeDivergence(String branch1, String branch2){
         String sha1=refManager.getBranchSha(branch1);
         String sha2=refManager.getBranchSha(branch2);
 
@@ -43,10 +42,9 @@ public class BranchDivergenceAnalyzer {
                     continue;
                 else
                 {
-                    if(branch1TouchedFiles.getOrDefault(fileName,null)==null)
-                        branch1TouchedFiles.put(fileName,new ArrayList<>());
-                    else
-                        branch1TouchedFiles.get(fileName).add(commitSha);
+                    branch1TouchedFiles
+                            .computeIfAbsent(fileName, k -> new ArrayList<>())
+                            .add(commitSha);
                 }
             }
         }
@@ -60,12 +58,36 @@ public class BranchDivergenceAnalyzer {
                     continue;
                 else
                 {
-                    if(branch1TouchedFiles.getOrDefault(fileName,null)==null)
-                        branch1TouchedFiles.put(fileName,new ArrayList<>());
-                    else
-                        branch1TouchedFiles.get(fileName).add(commitSha);
+                    branch2TouchedFiles
+                            .computeIfAbsent(fileName, k -> new ArrayList<>())
+                            .add(commitSha);
                 }
             }
         }
+        Set<String>intersectingFiles=new HashSet<>(branch1TouchedFiles.keySet());
+        intersectingFiles.retainAll(branch2TouchedFiles.keySet());
+
+        int commitsBehind=commitDAG.findLCASize(sha1,sha2);
+        //lca=lcaCommit
+        Map<String, FileCollisionRisk>filRisks=new HashMap<>();
+
+        for(String fileName:intersectingFiles)
+        {
+            FileCollisionRisk fileCollisionRisk=new FileCollisionRisk();
+            fileCollisionRisk.setFileName(fileName);
+
+            fileCollisionRisk.setBranch1Commits(branch1TouchedFiles.get(fileName));
+            fileCollisionRisk.setBranch2Commits(branch2TouchedFiles.get(fileName));
+
+            fileCollisionRisk.setTouchCountBranch1(branch1TouchedFiles.get(fileName).size());
+            fileCollisionRisk.setTouchCountBranch2(branch2TouchedFiles.get(fileName).size());
+
+            filRisks.putIfAbsent(fileName,fileCollisionRisk);
+        }
+        return new DivergenceReport(
+                lcaCommit,
+                commitsBehind,
+                filRisks
+        );
     }
 }
