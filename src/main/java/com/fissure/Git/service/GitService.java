@@ -24,12 +24,13 @@ public class GitService {
         this.indexStaging=new HashMap<>();
         this.refManager=refManager;
     }
-    public void gitInit() {
+    public boolean gitInit() {
         if (refManager.getLatestCommitByBranch().containsKey("main")) {
-            throw new RuntimeException("Repository already initialized");
+            return false;
         }
         refManager.createBranch("main", null);
         refManager.setHeadBranch("main");
+        return true;
     }
 
     public String getHeadSha()
@@ -90,7 +91,7 @@ public class GitService {
     }
     public void gitCreateBranch(String branchName)
     {
-        refManager.createBranch(branchName,null);
+        refManager.createBranch(branchName, refManager.getHeadSha());
     }
     public List<String>gitListBranch()
     {
@@ -109,7 +110,13 @@ public class GitService {
 
         // Start BFS from all branch heads
         Map<String, String> branches = refManager.getLatestCommitByBranch();
-        Queue<String> queue = new LinkedList<>(branches.values());
+        Map<String, String> sanitizedBranches = new HashMap<>();
+        for (Map.Entry<String, String> entry : branches.entrySet()) {
+            if (entry.getKey() != null) {
+                sanitizedBranches.put(entry.getKey(), entry.getValue());
+            }
+        }
+        Queue<String> queue = new LinkedList<>(sanitizedBranches.values());
 
         List<GraphNode> nodes = new ArrayList<>();
 
@@ -132,7 +139,7 @@ public class GitService {
             queue.addAll(commit.getParentCommitSha());
         }
 
-        return new GraphResponse(nodes, branches);
+        return new GraphResponse(nodes, sanitizedBranches);
     }
 
     public String gitCommit(String message, String author) throws DigestException, NoSuchAlgorithmException {

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.Objects;
 
 @Component
 public class BranchDivergenceAnalyzerService {
@@ -23,11 +24,14 @@ public class BranchDivergenceAnalyzerService {
         String sha1=refManager.getBranchSha(branch1);
         String sha2=refManager.getBranchSha(branch2);
 
-        String lcaCommit=commitDAG.findLCA(sha1,sha2);
-        Tree lcaTree=(Tree)objectStore.getGitObject(lcaCommit);
+        String lcaCommitSha=commitDAG.findLCA(sha1,sha2);
+        Commit lcaCommit = lcaCommitSha == null ? null : (Commit)objectStore.getGitObject(lcaCommitSha);
+        Tree lcaTree = (lcaCommit == null || lcaCommit.getTreeSha() == null)
+                ? null
+                : (Tree)objectStore.getGitObject(lcaCommit.getTreeSha());
 
-        List<String>historySha1=commitDAG.getHistoryTillGivenCommit(sha1,lcaCommit);
-        List<String>historySha2=commitDAG.getHistoryTillGivenCommit(sha2,lcaCommit);
+        List<String>historySha1=commitDAG.getHistoryTillGivenCommit(sha1,lcaCommitSha);
+        List<String>historySha2=commitDAG.getHistoryTillGivenCommit(sha2,lcaCommitSha);
 
         Map<String, List<String>>branch1TouchedFiles=new HashMap<>();
         Map<String, List<String>> branch2TouchedFiles=new HashMap<>();
@@ -38,7 +42,9 @@ public class BranchDivergenceAnalyzerService {
             Tree tree=(Tree)objectStore.getGitObject(commit.getTreeSha());
             for(String fileName:tree.getEntries().keySet())
             {
-                if(tree.getBlobSha(fileName).equals(lcaTree.getBlobSha(fileName)))
+                String currentBlob = tree.getBlobSha(fileName);
+                String lcaBlob = lcaTree == null ? null : lcaTree.getBlobSha(fileName);
+                if(Objects.equals(currentBlob, lcaBlob))
                     continue;
                 else
                 {
@@ -54,7 +60,9 @@ public class BranchDivergenceAnalyzerService {
             Tree tree=(Tree)objectStore.getGitObject(commit.getTreeSha());
             for(String fileName:tree.getEntries().keySet())
             {
-                if(tree.getBlobSha(fileName).equals(lcaTree.getBlobSha(fileName)))
+                String currentBlob = tree.getBlobSha(fileName);
+                String lcaBlob = lcaTree == null ? null : lcaTree.getBlobSha(fileName);
+                if(Objects.equals(currentBlob, lcaBlob))
                     continue;
                 else
                 {
@@ -85,7 +93,7 @@ public class BranchDivergenceAnalyzerService {
             filRisks.putIfAbsent(fileName,fileCollisionRisk);
         }
         return new DivergenceReport(
-                lcaCommit,
+                lcaCommitSha,
                 commitsBehind,
                 filRisks
         );

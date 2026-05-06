@@ -49,6 +49,9 @@ public class RefManager {
     }
     public void createBranch(String branchToAdd,String sha)
     {
+        if (branchToAdd == null || branchToAdd.isBlank()) {
+            throw new IllegalArgumentException("Branch name cannot be empty");
+        }
         if(latestCommitByBranch.containsKey(branchToAdd))
         {
             throw new RuntimeException("Branch does already exists");
@@ -96,6 +99,12 @@ public class RefManager {
         }
 
         String branchSha = latestCommitByBranch.get(name);
+
+        // Branch pointer can be empty for an uncommitted branch; allow deletion.
+        if (branchSha == null) {
+            latestCommitByBranch.remove(name);
+            return;
+        }
 
         // Check if fully merged
         boolean isMerged = commitDAG.isAncestor(branchSha, currentHeadSha);

@@ -70,12 +70,30 @@ public class CodebaseMemoryService {
 
         IntentResult intent;
         try {
-            intent = objectMapper.readValue(intentResponse, IntentResult.class);
+            intent = objectMapper.readValue(extractJsonObject(intentResponse), IntentResult.class);
         } catch (Exception e) {
-            throw new RuntimeException("Intent parse failed: " + intentResponse);
+            intent = new IntentResult();
+            intent.setIntent("SUMMARY");
+            intent.setTimeRange(20);
+        }
+
+        if (intent.getIntent() == null || intent.getIntent().isBlank()) {
+            intent.setIntent("SUMMARY");
+        }
+        if (intent.getTimeRange() == null || intent.getTimeRange() <= 0) {
+            intent.setTimeRange(20);
         }
 
         return handleIntent(intent, question, branch);
+    }
+
+    private String extractJsonObject(String input) {
+        int start = input.indexOf("{");
+        int end = input.lastIndexOf("}");
+        if (start >= 0 && end > start) {
+            return input.substring(start, end + 1);
+        }
+        throw new IllegalArgumentException("No JSON object found in AI response");
     }
 
     private QueryResult handleIntent(IntentResult intent, String question, String branch) {

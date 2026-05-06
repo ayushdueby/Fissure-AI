@@ -88,14 +88,24 @@ public class ConflictProphetService {
 
             try {
                 List<FileProphecy> batchResult = objectMapper.readValue(
-                        response,
+                        extractJsonArray(response),
                         objectMapper.getTypeFactory()
                                 .constructCollectionType(List.class, FileProphecy.class)
                 );
                 results.addAll(batchResult);
 
             } catch (Exception e) {
-                throw new RuntimeException("Batch parse failed: " + response, e);
+                for (FileCollisionRisk risk : batch) {
+                    results.add(new FileProphecy(
+                            risk.getFileName(),
+                            0.5,
+                            "UNKNOWN",
+                            "AI response parsing failed, using safe fallback",
+                            List.of(),
+                            "Review this file manually before merge",
+                            false
+                    ));
+                }
             }
         }
         double avg = results.stream()
@@ -157,5 +167,14 @@ public class ConflictProphetService {
         response.setTrend(trend);
 
         return response;
+    }
+
+    private String extractJsonArray(String input) {
+        int start = input.indexOf("[");
+        int end = input.lastIndexOf("]");
+        if (start >= 0 && end > start) {
+            return input.substring(start, end + 1);
+        }
+        throw new IllegalArgumentException("No JSON array found in AI response");
     }
 }
