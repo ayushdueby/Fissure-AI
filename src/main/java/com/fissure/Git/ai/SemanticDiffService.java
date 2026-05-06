@@ -28,35 +28,71 @@ public class SemanticDiffService {
                 continue;
             sb.append(diffLine.getType()).append(": ").append(diffLine.getDiffContent()).append("\n");
         }
-        String prompt="You are a code review expert. Analyze this diff and return JSON with:\n" +
-                "1. \"summary\" - one line what changed\n" +
-                "2. \"type\" - REFACTOR / BUGFIX / FEATURE / RENAME / CLEANUP\n" +
-                "3. \"semanticGroups\" - group related changes together with explanation\n" +
-                "4. \"suggestions\" - list of improvement suggestions\n" +
-                "5. \"riskLevel\" - LOW / MEDIUM / HIGH with reason\n" +
-                "\n" +
-                "Diff:\n```diff\n" + sb + "\n```\n" +
-                "Return only valid JSON, nothing else.";
+        String prompt =
+                """
+                You are a code review AI.
+                
+                Return ONLY valid JSON.
+                
+                Do NOT explain anything.
+                Do NOT use markdown.
+                Do NOT wrap in ```json.
+                
+                Expected JSON format:
+                
+                {
+                  "summary": "...",
+                  "type": "BUGFIX",
+                  "semanticGroups": [
+                    {
+                      "explanation": "...",
+                      "lines": ["..."]
+                    }
+                  ],
+                  "suggestions": ["..."],
+                  "riskLevel": "LOW"
+                }
+                
+                Diff:
+                %s
+                """.formatted(sb.toString());
         //feed this prompt to geminai API:
         String aiResult=aiService.generation(prompt);
         return parseResponse(aiResult);
     }
     public SemanticDiffResult parseResponse(String aiResponse) {
+
         ObjectMapper mapper = new ObjectMapper();
+
         try {
+
+            System.out.println("RAW AI RESPONSE:");
+            System.out.println(aiResponse);
+
             String clean = jsonCleaner.cleanJson(aiResponse);
 
-            // Extract Gemini "text"
-            if (clean.contains("\"text\":")) {
-                int start = clean.indexOf("\"text\":") + 8;
-                int end = clean.lastIndexOf("\"");
-                clean = clean.substring(start, end);
+            clean = clean
+                    .replace("```json", "")
+                    .replace("```", "")
+                    .trim();
+
+            int start = clean.indexOf("{");
+            int end = clean.lastIndexOf("}");
+
+            if (start != -1 && end != -1) {
+                clean = clean.substring(start, end + 1);
+            }
+
+            if (clean.contains("\"error\"")) {
+                return fallbackResult(clean);
             }
 
             return mapper.readValue(clean, SemanticDiffResult.class);
 
         } catch (Exception e) {
+
             e.printStackTrace();
+
             return fallbackResult(aiResponse);
         }
     }

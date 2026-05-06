@@ -7,5 +7,5 @@ import java.util.List;
 @Data
 public class SemanticGroup {
     private String explanation;
-    private List<DiffLine> lines;
+    private List<String> lines;
 }
