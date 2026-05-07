@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/git",
+  baseURL: process.env.NEXT_PUBLIC_GIT_API_BASE || "http://localhost:8080/git",
   timeout: 30000,
   headers: { "Content-Type": "application/json" },
 });

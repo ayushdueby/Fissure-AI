@@ -340,3 +340,25 @@ src/main/java/com/gitclone/
 **Conflict trajectory over time** — not just whether two branches will conflict, but how quickly the risk is growing commit by commit. A risk score of 0.7 that grew from 0.1 in two commits is different from one that has been 0.7 for ten commits.
 
 **Commit intent inference from diff** — classifying what a commit actually did, independent of what the message says, using the actual code changes as evidence.
+
+---
+
+## Deploy on Render
+
+This repository includes `render.yaml` for one-click blueprint deployment of:
+
+- `fissure-backend` (Spring Boot)
+- `fissure-frontend` (Next.js)
+
+### Steps
+
+1. Push your latest code to GitHub.
+2. In Render, choose **New + > Blueprint**.
+3. Select this repository.
+4. Render will detect `render.yaml` and create both services.
+5. After first deploy, verify frontend env:
+   - `NEXT_PUBLIC_GIT_API_BASE=https://<your-backend-service>.onrender.com/git`
+
+Backend CORS supports localhost and `https://*.onrender.com` by default, and can be overridden with:
+
+`APP_CORS_ALLOWED_ORIGINS`

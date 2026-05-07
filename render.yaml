@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: fissure-backend
+    runtime: java
+    plan: free
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -Dserver.port=$PORT -jar target/fissure-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://fissure-frontend.onrender.com,https://*.onrender.com
+
+  - type: web
+    name: fissure-frontend
+    runtime: node
+    rootDir: frontendFissure
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_GIT_API_BASE
+        value: https://fissure-backend.onrender.com/git
